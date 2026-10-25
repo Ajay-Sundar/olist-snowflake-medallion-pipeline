@@ -1,0 +1,17 @@
+version: 2
+
+# Raw Bronze tables loaded from S3 (read-only inputs to the Silver layer)
+sources:
+  - name: bronze
+    database: OLIST_DB
+    schema: BRONZE
+    tables:
+      - name: orders
+      - name: order_items
+      - name: customers
+      - name: products
+      - name: sellers
+      - name: payments
+      - name: reviews
+      - name: geolocation
+      - name: category_translation
