@@ -36,3 +36,4 @@ models:
     # Gold: business-ready data, saved as tables (fast for dashboards)
     gold:
       +materialized: table
+      +schema: gold
