@@ -1,0 +1,88 @@
+version: 2
+
+models:
+  - name: dim_date
+    description: "One row per calendar day, 2016-2018."
+    columns:
+      - name: date_key
+        description: "Date as a number (YYYYMMDD). Joins to fact tables."
+        data_tests:
+          - unique
+          - not_null
+
+  - name: dim_customers
+    description: "One row per real person (customer_unique_id), with latest location and order history."
+    columns:
+      - name: customer_unique_id
+        data_tests:
+          - unique
+          - not_null
+
+  - name: dim_products
+    description: "One row per product, with English category names (Portuguese fallback)."
+    columns:
+      - name: product_id
+        data_tests:
+          - unique
+          - not_null
+      - name: category
+        data_tests:
+          - not_null
+
+  - name: dim_sellers
+    description: "One row per seller, with approximate map coordinates."
+    columns:
+      - name: seller_id
+        data_tests:
+          - unique
+          - not_null
+
+  - name: fact_order_items
+    description: "One row per item in an order (order_id + order_item_id)."
+    columns:
+      - name: customer_unique_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_unique_id
+      - name: product_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_products')
+                field: product_id
+      - name: seller_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_sellers')
+                field: seller_id
+      - name: order_date_key
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+
+  - name: fact_orders
+    description: "One row per order, with totals, payment, review score and delivery performance."
+    columns:
+      - name: order_id
+        data_tests:
+          - unique
+          - not_null
+      - name: customer_unique_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_unique_id
+      - name: order_status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['delivered', 'shipped', 'canceled', 'unavailable',
+                         'invoiced', 'processing', 'created', 'approved']

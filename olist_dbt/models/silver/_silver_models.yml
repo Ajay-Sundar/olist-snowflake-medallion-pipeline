@@ -1,0 +1,107 @@
+version: 2
+
+models:
+  - name: silver_orders
+    description: "Cleaned orders with proper timestamp types. One row per order."
+    columns:
+      - name: order_id
+        data_tests:
+          - unique
+          - not_null
+      - name: customer_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('silver_customers')
+                field: customer_id
+
+  - name: silver_order_items
+    description: "One row per item in an order (order_id + order_item_id)."
+    columns:
+      - name: order_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('silver_orders')
+                field: order_id
+      - name: price
+        data_tests:
+          - not_null
+
+  - name: silver_customers
+    description: "One row per customer_id (per order). customer_unique_id identifies the real person."
+    columns:
+      - name: customer_id
+        data_tests:
+          - unique
+          - not_null
+
+  - name: silver_sellers
+    description: "One row per seller."
+    columns:
+      - name: seller_id
+        data_tests:
+          - unique
+          - not_null
+
+  - name: silver_products
+    description: "One row per product. Missing categories labelled 'unknown'."
+    columns:
+      - name: product_id
+        data_tests:
+          - unique
+          - not_null
+      - name: category_name
+        data_tests:
+          - not_null
+
+  - name: silver_category_translation
+    description: "Lookup of Portuguese category names to English."
+    columns:
+      - name: category_name
+        data_tests:
+          - unique
+          - not_null
+
+  - name: silver_payments
+    description: "One row per payment within an order. Includes 3 'not_defined' payments worth 0."
+    columns:
+      - name: order_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('silver_orders')
+                field: order_id
+      - name: payment_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['credit_card', 'boleto', 'voucher', 'debit_card', 'not_defined']
+
+  - name: silver_reviews
+    description: "One row per review per order. review_id can repeat when one review covers several orders, so it is NOT tested as unique."
+    columns:
+      - name: order_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('silver_orders')
+                field: order_id
+      - name: review_score
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5]
+                quote: false
+
+  - name: silver_geolocation
+    description: "Zip prefix to coordinates, exact duplicates removed. Many points per zip."
+    columns:
+      - name: zip_code_prefix
+        data_tests:
+          - not_null
