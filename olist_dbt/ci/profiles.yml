@@ -1,0 +1,17 @@
+# profiles.yml for automated runs (GitHub Actions)
+# Contains no secrets: values come from environment variables set by GitHub Secrets
+# Local development still uses ~/.dbt/profiles.yml
+
+olist_dbt:
+  target: ci
+  outputs:
+    ci:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: DBT_USER
+      private_key_path: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH') }}"
+      role: DBT_ROLE
+      warehouse: SNOWFLAKE_LEARNING_WH
+      database: OLIST_DB
+      schema: SILVER
+      threads: 4

@@ -1,0 +1,42 @@
+# Runs dbt build (Silver + Gold models and tests) every day after the Bronze load task
+name: dbt daily build
+
+on:
+  schedule:
+    # 20:30 UTC = 7:30 am Sydney (summer, AEDT) / 6:30 am (winter, AEST)
+    # Always after the 6:00 am Sydney Bronze load task
+    - cron: '30 20 * * *'
+  workflow_dispatch:   # Adds a "Run workflow" button to run it manually
+
+jobs:
+  dbt-build:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: olist_dbt
+
+    steps:
+      - name: Download the repository
+        uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dbt
+        run: pip install -r ../requirements.txt
+
+      - name: Write the Snowflake private key to a temporary file
+        env:
+          SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
+        run: |
+          printf '%s\n' "$SNOWFLAKE_PRIVATE_KEY" > "$RUNNER_TEMP/snowflake_rsa_key.p8"
+          chmod 600 "$RUNNER_TEMP/snowflake_rsa_key.p8"
+
+      - name: Run dbt build (models + tests)
+        env:
+          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_PRIVATE_KEY_PATH: ${{ runner.temp }}/snowflake_rsa_key.p8
+        run: dbt build --profiles-dir ci
